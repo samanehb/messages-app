@@ -23,6 +23,9 @@ export default class MessageModel extends ObjectModel{
      * See super.copy for documentation
      */
     static copy(obj) {
+        if(!obj) {
+            return undefined;
+        }
         return new MessageModel(obj.messageContent, obj.messageId, obj._id, obj._rev);
         
         // or try this TODO 
@@ -36,6 +39,10 @@ export default class MessageModel extends ObjectModel{
         // create UUID
         this._messageId = uuid.v1();
         return this._messageId;
+    }
+
+    get messageContent() {
+        return this._messageContent;
     }
 
     get isPalindrome() {
@@ -55,7 +62,7 @@ export default class MessageModel extends ObjectModel{
     getApiModel(version) {
         if(version.toLowerCase() === 'v1') {
             return {
-                messageContent: this._messageContent, 
+                messageContent: this.messageContent, 
                 messageId: this.messageId
             };
         } else { // else handle future versions here
@@ -69,7 +76,7 @@ export default class MessageModel extends ObjectModel{
      */
     getPersistedModel() {
         return {
-            messageContent: this._messageContent, 
+            messageContent: this.messageContent, 
             messageId: this.messageId, // make sure UUID is set if not already
             _id: this._id,
             _rev: this._rev,

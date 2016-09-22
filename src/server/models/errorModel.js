@@ -32,7 +32,7 @@ export default class ErrorModel extends ObjectModel {
      */
     getApiModel(version) {
         // using JSON naming convention for field names (camel case)
-        if(version.toLowerCase() === 'v1') {
+        if(version && version.toLowerCase() === 'v1') {
             return {
                 code: this.code, 
                 message: this.message,

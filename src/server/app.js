@@ -7,7 +7,8 @@ const bodyParser = require('body-parser')
 const http = require('http');
 const https = require('https');
 //var logger = require('morgan');
-import {CloudantClient} from './database/cloudantClient';
+import {initializeDb} from './database/cloudantClient';
+import ErrorModel from './models/errorModel';
 
 const app = express();
 
@@ -17,14 +18,27 @@ const api = '/api';
 
 //app.use(logger('dev'));
 
-function init() {
+function initApiHandlers() {
     
     const messages = require('./routes/messages');
 
     app.use(bodyParser.json());
 
-    // generic error handling, when no other means have been successful
+    // we only allow application/json content type
     app.use((req, res, next) => {
+        console.log(req.method);
+        if((req.method === 'POST' || req.method === 'PUT')
+            && req.headers['content-type'] !== 'application/json') {
+            const err = new ErrorModel(undefined, 'Content-type must be application/json');
+            err.status = 415; // Unsupported Media Type
+            next(err);
+        } else {
+            next();
+        }
+    });
+
+    // generic error handling, when no other means have been successful
+    /*app.use((req, res, next) => {
         req.on('error', (err) => {
             console.error(err.stack);
         });
@@ -33,6 +47,7 @@ function init() {
         });
         next();
     });
+    */
 
     app.get(`${api}/tickets`, (req, res) => {
         res.end('ticket here');
@@ -46,21 +61,34 @@ function init() {
 
     // handle 404 and forwarding to error handler. This middleware is only reached if none of paths above fully handled the request
     app.use((req, res, next) => {
-        var err = new Error('Not Found');
+        const err = new ErrorModel(undefined, 'Not Found');
         err.status = 404;
         next(err); // propagate to error handler
     });
 
     // error handler, build error obj, no stacktraces
     app.use((err, req, res, next) => {
-        res.status(err.status || 500).send({
-            message: err.message,
-            error: {}
-        });
+        if(err && err.modelName !== 'ErrorModel') {
+            // if error is of type ErrorModel then it is good already, otherwise add getApiModel to make it easy to handle similar to ErrorModel
+            // hide error details
+            err.getApiModel = () => {
+                return {message: err.message} // .message comes from builtin Error object
+            };
+        }
+        res.status(err.status || 500).send(err.getApiModel('v1'));
     });
 }
 
-init();
+/**
+ * Connect to cloudant account, try to create db and initialize it. 
+ *  needs to be done first, to prepare before an api call comes in.
+ * If it fails (rejected), it is ignored here since it will be tried again on future api calls
+ */
+initializeDb();
+
+initApiHandlers();
+
+// run server
 http.createServer(app).listen(config.port, () => {
     console.log(`server listening on port ${config.port}`);
 });

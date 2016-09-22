@@ -1,7 +1,7 @@
-import {process, getApiVersion} from '../../helpers/responseProcessing';
-import {insert} from '../../database/cloudantClient';
-import MessageModel from '../../models/messageModel';
-import ErrorModel from '../../models/errorModel';
+import {process, getApiVersion} from '../../../helpers/responseProcessing';
+import {insert} from '../../../database/cloudantClient';
+import MessageModel from '../../../models/messageModel';
+import ErrorModel from '../../../models/errorModel';
 
 export default function getMessage(req, res) {
     const messageId = req.params ? req.params.messageId : undefined;
