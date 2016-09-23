@@ -5,7 +5,7 @@ import {config} from './appconfig';
 const express = require('express');
 const bodyParser = require('body-parser')
 const http = require('http');
-const https = require('https');
+//const https = require('https');
 //var logger = require('morgan');
 import {initializeDb} from './database/cloudantClient';
 import ErrorModel from './models/errorModel';
@@ -19,14 +19,11 @@ const api = '/api';
 //app.use(logger('dev'));
 
 function initApiHandlers() {
-    
     const messages = require('./routes/messages');
 
     app.use(bodyParser.json());
-
     // we only allow application/json content type
     app.use((req, res, next) => {
-        console.log(req.method);
         if((req.method === 'POST' || req.method === 'PUT')
             && req.headers['content-type'] !== 'application/json') {
             const err = new ErrorModel(undefined, 'Content-type must be application/json');
@@ -36,28 +33,11 @@ function initApiHandlers() {
             next();
         }
     });
-
-    // generic error handling, when no other means have been successful
-    /*app.use((req, res, next) => {
-        req.on('error', (err) => {
-            console.error(err.stack);
-        });
-        res.on('error', (err) => {
-            console.error(err);
-        });
-        next();
-    });
-    */
-
-    app.get(`${api}/tickets`, (req, res) => {
-        res.end('ticket here');
-    });
+    
+    // since non-js files are not moved by babel, we need to direct to server
+    app.use(express.static(__dirname + '/../../src/server/public'));
 
     app.use(`${api}`, messages);
-
-    app.get(`${api}/books`, (req, res) => {
-        res.end('book here');
-    });
 
     // handle 404 and forwarding to error handler. This middleware is only reached if none of paths above fully handled the request
     app.use((req, res, next) => {
@@ -75,7 +55,15 @@ function initApiHandlers() {
                 return {message: err.message} // .message comes from builtin Error object
             };
         }
-        res.status(err.status || 500).send(err.getApiModel('v1'));
+        res.status(err.status || 500).send(err.getApiModel());
+    });
+}
+
+function initServer() {
+    initApiHandlers();
+    // run server
+    http.createServer(app).listen(config.port, () => {
+        console.log(`server listening on port ${config.port}`);
     });
 }
 
@@ -84,12 +72,9 @@ function initApiHandlers() {
  *  needs to be done first, to prepare before an api call comes in.
  * If it fails (rejected), it is ignored here since it will be tried again on future api calls
  */
-initializeDb();
-
-initApiHandlers();
-
-// run server
-http.createServer(app).listen(config.port, () => {
-    console.log(`server listening on port ${config.port}`);
+initializeDb().then(() => {
+    initServer(); // initialized db, allow api calls to come in
+}).catch(() => {
+    initServer(); // let's ignore, first api call will repeat this
 });
-//https.createServer(options, app).listen(443);
+

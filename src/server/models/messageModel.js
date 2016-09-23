@@ -27,9 +27,6 @@ export default class MessageModel extends ObjectModel{
             return undefined;
         }
         return new MessageModel(obj.messageContent, obj.messageId, obj._id, obj._rev);
-        
-        // or try this TODO 
-        //obj.prototype = MessageModel;
     }
 
     get messageId() {
@@ -51,8 +48,18 @@ export default class MessageModel extends ObjectModel{
         if(this._isPalindrome !== undefined) {
             return this._isPalindrome;
         }
-        // TODO
-        this._isPalindrome = true;
+        if(!this._messageContent) {
+            // empty string can be assumed a palindrome
+            this._isPalindrome = true;
+        } else {
+            console.log('---------');
+            console.log([...this._messageContent]);
+            console.log([...this._messageContent].reverse());
+            console.log([...this._messageContent].reverse().join(''))
+            console.log('---------');
+            const reversed = [...this._messageContent].reverse().join('').toLowerCase();
+            this._isPalindrome = this._messageContent.toLowerCase() === reversed;        
+        }
         return this._isPalindrome;
     }
 
@@ -60,13 +67,13 @@ export default class MessageModel extends ObjectModel{
      * See super.getApiModel for documentation
      */
     getApiModel(version) {
-        if(version.toLowerCase() === 'v1') {
+        if(version.toLowerCase() === 'v1' || version.toLowerCase() === 'v2') {
             return {
                 messageContent: this.messageContent, 
                 messageId: this.messageId
             };
         } else { // else handle future versions here
-            return {}; // return default, this is an invalid state, just avoiding undefined
+            return super.getApiModel(version, true); // return default, this is an invalid state (see documentation of super)
         }
     }
 

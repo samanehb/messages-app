@@ -9,7 +9,7 @@ const MAX_ALLOWED_SIZE = 255;
 
 export default function createMessage(req, res) {
     // convert response body to api model object, this also gets rid of unwanted properties
-    let message = MessageModel.copy(req.body);
+    const message = MessageModel.copy(req.body);
     // input validation
     if(!message || !message.messageContent || message.messageContent.length === 0 ||
          message.messageContent.length > MAX_ALLOWED_SIZE) {

@@ -1,5 +1,5 @@
 import v1_createMessage  from '../controllers/v1/messages/createMessage';
-import v1_deleteMessages     from '../controllers/v1/messages/deleteMessage';
+import v1_deleteMessage     from '../controllers/v1/messages/deleteMessage';
 import v1_getAllMessages     from '../controllers/v1/messages/getAllMessages';
 import v1_getMessage     from '../controllers/v1/messages/getMessage';
 import v1_getPalindrome     from '../controllers/v1/messages/getPalindrome';
@@ -9,8 +9,11 @@ const router = express.Router();
 
 /****  V1 *****/
 router.post('/v1/messages', v1_createMessage);
-router.delete('/v1/messages/:messageId', v1_deleteMessages); // ??
+router.delete('/v1/messages/:messageId', v1_deleteMessage);
+// TODO 
+// router.delete('/v1/messages, v1_deleteMessages);
 router.get('/v1/messages', v1_getAllMessages);
+router.get('/messages/v1/', v1_getAllMessages);
 router.get('/v1/messages/:messageId', v1_getMessage);
 
 router.get('/v1/messages/:messageId/palindrome', v1_getPalindrome);

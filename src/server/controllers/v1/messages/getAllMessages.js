@@ -9,16 +9,15 @@ export default function getAll(req, res) {
     const version = getApiVersion(req);
     const serverErr = new ErrorModel(ErrorCodes.MESSAGE_GETALL_FAIL, Strings.MESSAGE_RETREIVE_FAIL);
     getAllMessages().then((messages) => {
-        if(!messages) {
+        if(!messages) { // even if there are no messages, this should have returned an empty array
             return process({status: 500, data: serverErr}, req, res);
         }
         // map each database document to a proper api model
         const messageModels = messages.map((item) => {
             const mm = MessageModel.copy(item);
-            if(!mm) {
-                return undefined; // skip element
+            if(mm) {
+                return mm.getApiModel(version);
             }
-            return mm.getApiModel(version);
         });
         return process({status: 200, data: messageModels}, req, res);
     }).catch((err) => {
@@ -26,6 +25,7 @@ export default function getAll(req, res) {
             // cloudant client already built an api ready error, so use it
             return process({status: 500, data: err}, req, res);
         } else {
+            console.log(err);
             return process({status: 500, data: serverErr}, req, res);
         }
     });

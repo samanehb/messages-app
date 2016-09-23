@@ -20,12 +20,19 @@ export default class ObjectModel {
 
     /**
      * Returns the object that should be returned by or consumed by apis, considering the api version
+     * Throws Error if facing unsupported version (a supported version is decided by child/model implementation)
      * 
      * Implementation notes: use this to hide properties that may be added to this object for application layer logic 
      *  while not needed to be seen outside
      *  This is also important for properly maintaining api models and versioning
      */
-    getApiModel(/*version: api versioning string*/) {
+    getApiModel(version, isUnsupportedVersion) {
+        // since routing handles versions, this can only happen if a programming mistake ocurrs where router is added for a version but object model for that version is not supported
+        // this error is expected to be easily found at time of testing of new apis, so should not ocur when apis are shipped to customer
+        // if thrown, should be catched (by promise.catch) and converted to 500 error
+        if(isUnsupportedVersion) {
+            throw new Error('Invalid api version. No response model is found for this version.');
+        }
         return {};
     }
 

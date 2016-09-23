@@ -22,7 +22,7 @@ export default class PalindromeModel extends MessageModel {
                 isPalindrome: this.isPalindrome
             };
         } else { // else handle future versions here
-            return {}; // return default, this is an invalid state, just avoiding undefined
+            return super.getApiModel(version, true); // return default, this is an invalid state (see documentation of super)
         }
     }
 }

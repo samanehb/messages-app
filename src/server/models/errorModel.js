@@ -39,7 +39,10 @@ export default class ErrorModel extends ObjectModel {
                 description: this.description
             }
         } else { // else handle future versions here
-            return {}; // return default, this is an invalid state, just avoiding undefined
+            // for error code, better always return message, this will never go away, and in case version is missing we need some error
+            return {
+                message: this.message
+            }; // return default, this is an invalid state, just avoiding undefined
         }
     }
 
