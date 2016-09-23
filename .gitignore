@@ -1,6 +1,7 @@
 node_modules/
 .gitignore/
 .elasticbeanstalk/
+lib/
 
 # Elastic Beanstalk Files
 

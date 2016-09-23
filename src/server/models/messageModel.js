@@ -42,27 +42,6 @@ export default class MessageModel extends ObjectModel{
         return this._messageContent;
     }
 
-    get isPalindrome() {
-        // Cache the result of calculation for this object in case retrieved more than once
-        // If this is a highly requested property, we can think of persisting in database as part of the data, since it only changes when data/message changes
-        if(this._isPalindrome !== undefined) {
-            return this._isPalindrome;
-        }
-        if(!this._messageContent) {
-            // empty string can be assumed a palindrome
-            this._isPalindrome = true;
-        } else {
-            console.log('---------');
-            console.log([...this._messageContent]);
-            console.log([...this._messageContent].reverse());
-            console.log([...this._messageContent].reverse().join(''))
-            console.log('---------');
-            const reversed = [...this._messageContent].reverse().join('').toLowerCase();
-            this._isPalindrome = this._messageContent.toLowerCase() === reversed;        
-        }
-        return this._isPalindrome;
-    }
-
     /**
      * See super.getApiModel for documentation
      */

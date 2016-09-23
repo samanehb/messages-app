@@ -1,6 +1,9 @@
 import {process, getApiVersion} from '../../../helpers/responseProcessing';
 import {getById} from '../../v1/messages/getMessage';
 import PalindromeModel from '../../../models/palindromeModel';
+import {ErrorCodes} from '../../../helpers/errorCodes';
+import ErrorModel from '../../../models/errorModel';
+import {Strings} from '../../../strings/strings-en';
 
 /**
  * Defining an api to get whether a message is palindrome, since it doesn't directly match the REST concept of a resource,
@@ -18,12 +21,20 @@ import PalindromeModel from '../../../models/palindromeModel';
  */
 export default function getPalindrome(req, res) {
     getById(req, (errStatus, responseObj) => {
-        const message = PalindromeModel.copy(responseObj);
+        const version = getApiVersion(req);
         if(!errStatus) {
             // no error, we found the message.
-            errStatus = 200;
+            const message = PalindromeModel.copy(responseObj);
+            // getApiModel for this version will return an object containing isPalindrome
+            return process({status: 200, data: message.getApiModel(version)}, req, res);
         }
-        // getApiModel for this version will return an object containing isPalindrome
-        return process({status: errStatus, data: message.getApiModel(getApiVersion(req))}, req, res); // no content
+        // there was an error, so returned object is ErrorModel if handled by getById
+        if(responseObj && responseObj.modelName === 'ErrorModel') {
+            // getById already built an api ready error, so use it
+            return process({status: errStatus, data: responseObj.getApiModel(version)}, req, res);
+        } else {
+            console.log(responseObj || errStatus);
+            return process({status: errStatus, data: new ErrorModel(ErrorCodes.MESSAGE_GET_PALINDROME_FAIL, Strings.ERROR_INTERNAL_SERVER)}, req, res);
+        }
     });
 }

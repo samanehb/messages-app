@@ -27,6 +27,5 @@ export function getApiVersion(req) {
         return '';
     }
     match = match[0].replace(/\//g,''); // replace the '/'s surrounding v\d
-    console.log(match);
     return match;
 }

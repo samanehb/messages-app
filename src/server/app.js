@@ -48,6 +48,7 @@ function initApiHandlers() {
 
     // error handler, build error obj, no stacktraces
     app.use((err, req, res, next) => {
+        console.log(err);
         if(err && err.modelName !== 'ErrorModel') {
             // if error is of type ErrorModel then it is good already, otherwise add getApiModel to make it easy to handle similar to ErrorModel
             // hide error details
