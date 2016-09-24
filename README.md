@@ -27,7 +27,7 @@ Table of Contents
 
 <a name="rest"></a>
 ## REST APIs
-------------
+
 *Note:* The cURL command examples in this section all use *'localhost:3000'* URL based on assumption that you are running the application locally with default settings (explained in [Run Application Locally](#runlocal)). Adjust if this assumption is not correct.
 
 To follow these example, get cURL from: [https://curl.haxx.se/download.html](https://curl.haxx.se/download.html)
@@ -219,7 +219,7 @@ HTTP/1.1 404 Not Found
 
 <a name="runlocal"></a>
 ## Run Application Locally
---------------------------
+
 Follow the instructions in this section to get the project up and running on your local machine for development. 
 
 
@@ -227,6 +227,7 @@ Follow the instructions in this section to get the project up and running on you
 * Install NodeJs from: [https://nodejs.org/en/download/](https://nodejs.org/en/download/)
 * Create an account in Cloudant: [https://cloudant.com/](https://cloudant.com/)
 
+<a name="envvars"></a>
 ### **Set Environment Variables**
 Open command line and set following environment variables based on your Cloudant account. The database name is anything you want, just stick to Cloudant rules (e.g. only lower case).
 
@@ -249,14 +250,32 @@ Where *yourdbname*, *yourusername*, *yourpass* are replaced with your own values
 <br />
 
 <a name="deploy"></a>
-## Deploy to AWS - Elastic Beanstalk
-------------------------------------
+## Provision and Deploy to AWS
+
+### **Prerequisities**
+* Create Amazon account
+* [Install the Elastic Beanstalk Command Line Interface (EB CLI)](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html)
+* [Create access keys](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html)
+
+### **Create an AWS Environment and Provision the Instance**
+
+This step needs to be done only once for the project folder.
+* Open command line and change directory to the project folder
+* [Set Environment Variables](#envvars) - you may skip this step, if so, you will be asked to provide this information in next step
+* Run provision.bat located in project folder and follow the prompts
+
+### **Deploy to Instance Again**
+
+After making changes to the project, you can deploy the changes from your local machine as follows:
+* Open command line and change directory to the project folder
+* Run deploy.bat located in project folder
+
 
 <br />
 
 <a name="architecture"></a>
 ## Description of Architecture
-------------------------------
+
 
 ### Data Modeling
 
@@ -266,39 +285,44 @@ Where *yourdbname*, *yourusername*, *yourpass* are replaced with your own values
 
 <a name="sequence"></a>
 ## Usecase Sequence Diagrams
-----------------------------
 
-### **Create a message: Interaction of components**
-![Image - create message diagram](http://messagingqlik.us-west-2.elasticbeanstalk.com/images/createMessage.png)
+### **Create a message**
+![Image - create message diagram](./src/server/public/images/createMessage.png)
+
+### **Get a message**
+![Image - get message diagram](./src/server/public/images/getMessage.png)
+
+### **Delete a message**
+![Image - delete message diagram](./src/server/public/images/deleteMessage.png)
 
 <br />
 
 <a name="todo"></a>
 ## TODO List
-------------
-[] Support https
 
-[] Authentication
+[ ] Support https
 
-[] User interface
+[ ] Authentication
 
-[] Tests
+[ ] User interface
 
-[] Etag
+[ ] Tests
 
-[] Response compression
+[ ] Etag
 
-[] Multitenancy
+[ ] Response compression
 
-[] Pagination
+[ ] Multitenancy
 
-[] Swagger
+[ ] Pagination
 
-[] Log to file
+[ ] Swagger
+
+[ ] Log to file
 
 <br />
 
 <a name="license"></a>
 ## License
-----------
+
 This project is licensed under the MIT License - see [LICENSE.txt](LICENSE.txt).
