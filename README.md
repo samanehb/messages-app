@@ -1,5 +1,5 @@
 # Basic Messages Application
-Simple application that allows users to submit messages, retrieve them, and delete them. A message is a simple object containing content and ID. Moreover, user can ask whether the content of a message is palindrome.
+Simple application that allows users to submit messages, retrieve them, and delete them. A *message* is a simple object containing content and ID. Moreover, user can ask whether the message is a palindrome.
 
 **WARNING:** This application is written as an assignment. The stored messages will be deleted on server restart. There is no user authentication.
 
@@ -13,9 +13,9 @@ Table of Contents
 
 [**Run Application Locally**](#runlocal)
 
-[**Deployment**](#deploy)
+[**Provision and Deploy to AWS**](#deploy)
 
-[**Description of Architecture**](#architecture)
+[**Description of Implementation Architecture**](#architecture)
 
 [**Usecase Sequence Diagrams**](#sequence)
 
@@ -30,7 +30,7 @@ Table of Contents
 
 *Note:* The cURL command examples in this section all use *'localhost:3000'* URL based on assumption that you are running the application locally with default settings (explained in [Run Application Locally](#runlocal)). Adjust if this assumption is not correct.
 
-To follow these example, get cURL from: [https://curl.haxx.se/download.html](https://curl.haxx.se/download.html)
+To follow these examples, get cURL from: [https://curl.haxx.se/download.html](https://curl.haxx.se/download.html)
 
 <br />
 
@@ -85,6 +85,17 @@ HTTP/1.1 415 Unsupported Media Type
 
 {"message":"Content-type must be application/json"}
 ```
+Another example of user error is providing a non-string `messageContent` or if the length is 0 or more than 255. In this case, following error is returned:
+```
+HTTP/1.1 400 Bad Request
+
+{"code":"EU101","message":"The object must have a property of \"messageContent\" of type string with length more than zero and less than 255"}
+```
+The *"code":"EU101"* is an error code to be able to troubleshoot easily and narrow down the problem when investigating defects or customer problems.
+
+The list of error codes can be found in [Error Codes](src/server/helpers/errorCodes.js).
+
+
 <br />
 
 <a name="getall"></a>
@@ -108,7 +119,7 @@ HTTP/1.1 200 OK
 
 ### **Retrieve a Message**
 
-To retrieve a message, you need its ID which is the value of *"messageId"* property returned as part of response when the message was first created (as in [Submit a New Message](#post)). Alternatively, you may get IDs of all existing message by retrieing all messages (as in [Get All Messages](#getall)).
+To retrieve a message, you need its ID which is the value of *"messageId"* property returned as part of response when the message was first created (as in [Submit a New Message](#post)). Alternatively, you may get IDs of all existing messages by retrieing all messages (as in [Get All Messages](#getall)).
 
 The API syntax to get a message is:
 ```
@@ -132,9 +143,6 @@ HTTP/1.1 404 Not Found
 
 {"code":"EU100","message":"Failed to retreive message(s)"}
 ```
-The *"code":"EU100"* is an error code to be able to troubleshoot easily and narrow down the problem when investigating defects or customer problems.
-
-The list of error codes can be found in [Error Codes](src/server/helpers/errorCodes.js).
 
 <br />
 
@@ -192,7 +200,7 @@ HTTP/1.1 404 Not Found
 
 ### **Delete a Message**
 
-To delete a message, you need its ID which is the value of *"messageId"* property returned as part of response when the message was first created (as in [Submit a New Message](#post)). Alternatively, you may get IDs of all existing message by retrieing all messages (as in [Get All Messages](#getall)).
+To delete a message, you need its ID which is the value of *"messageId"* property returned as part of response when the message was first created (as in [Submit a New Message](#post)). Alternatively, you may get IDs of all existing messages by retrieing all messages (as in [Get All Messages](#getall)).
 
 The API syntax to delete a message is:
 ```
@@ -240,7 +248,7 @@ set DATABASE_PASS=yourpass
 ```
 Where *yourdbname*, *yourusername*, *yourpass* are replaced with your own values.
 
-### **Install and Run**
+### **Build and Run**
 * Change directory to the project folder 
 * Run `npm install` - This will download all node packages.
 * Run `npm run dev` - This will run the server and will watch any code changes you make.
@@ -262,24 +270,44 @@ Where *yourdbname*, *yourusername*, *yourpass* are replaced with your own values
 This step needs to be done only once for the project folder.
 * Open command line and change directory to the project folder
 * [Set Environment Variables](#envvars) - you may skip this step, if so, you will be asked to provide this information in next step
-* Run provision.bat located in project folder and follow the prompts
+* Run provision.bat located in project folder and follow the prompts (this will also build project)
 
 ### **Deploy to Instance Again**
 
 After making changes to the project, you can deploy the changes from your local machine as follows:
 * Open command line and change directory to the project folder
-* Run deploy.bat located in project folder
-
+* Run deploy.bat located in project folder (this will also build project)
 
 <br />
 
 <a name="architecture"></a>
-## Description of Architecture
+## Description of Implementation Architecture
 
+### Overview of Modules
+* `controllers` folder contains API handlers. The folder structure contains the API version and resource name. 
+* `database` contains `cloudantClient` which has the logic for connecting to and using the Cloudant database. The `designDocs` folder contains JSON files representing database views and indices.
+* `helpers` has some helper or utility modules.
+* `models` contains data model modules, explained in more details in [Data Models](#models).
+* `public` contains images and files that can be served to client as a static file.
+* `routes` contains routing modules, explained in [API Routing](#routes).
+* `strings` contains globalization files for messages that will be sent to client. For example, `strings-en.js` contains messages in English. Future work is needed to include other languages and determine which file to use for getting value of a message by its key based on user lanaguage.
 
-### Data Modeling
+A note on `controllers`: Ideally the folder hierarchy should match the API path. For example, the handler for */api/v1/messages* is located under folder *messages* of *v1*. There is one exception, since */api/v1/message/:messageId/palindrome* is a special case for *messages* resource and there would be only one applicable HTTP verb (GET) an extra subfolder for palindrome seems unncessary. 
 
-### API Versioning
+<a name="routes"></a>
+### API Routing
+Express framework's [routing module](https://expressjs.com/en/guide/routing.html) is used to route apis to their appropriate handlers. For each REST resource, e.g. messages, there should be a router defined under `src\server\routes` folder. The router for resource knows about its API versions and which handler to call for each version and HTTP verb.
+
+<a name="models"></a>
+### Data Models
+All API resources are defined as data models that describe how the resource should look like to the client (by returning the client facing object in implementation of `getApiModel()` function). A data model can optionally also define how it should be persisted to the database (by returning the database object in implementation of `getPersistedModel()` function). For clarity, a super prototype is defined named `objectModel` that contains the signature for functions that each model can optionally implement. `objectModel` also contains the default (fall back) value that can be returned if the child decides not to implement a function.
+
+The reason for separation of the object model's representation for client from its representation in database is that client must not see all details of an object that could be persisted. For example, a database ID does not have to be revealed to user. On the other hand, a resource seen by client isn't necessarily persisted to database. This separation also allows for versioning of API representations, while keeping database and application logic unaffected. 
+
+Data models in this project are:
+* `ErrorModel` which is the error object returned in case of failure. An object of this type is a valid API return value, crafted for readability for user which also contains an error code that helps drilling down into issues. Since an `ErrorModel` is only a resource returned by API calls in case of error, it doesn't implement the `getPersistedModel()` function meaning there is no database object equivalent to `ErrorModel`.
+* `MessageModel` is the representation of a message resource that contains a `messageContent` and a `messageId`. Since a `MessageModel` needs to be both returned to client and persisted in database it needs to implement both `getApiModel()` and `getPersistedModel()` functions. 
+* `PalindromeModel` is a data model that consists of (inherits) `MessageModel` object in addition to logic to determine whether the `messageContent` is a palindrome. `PalindromeModel` has an API representation which is obtained by calling `getApiModel()`, but it doesn't have any independent `getPersistedModel()`, only the included parent object (the `MessageModel`) is persistable. 
 
 <br />
 

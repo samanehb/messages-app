@@ -1,13 +1,7 @@
-
+/**
+ * The parent prototype for all data models, defining the proper behavior for a good data model
+ */
 export default class ObjectModel {
-
-    /**
-     * param: docType: give a type for this object to be used as a key to fetch only this type from database
-     * not needed to be set if the ObjectModel doesn't need to be persisted
-     */
-    constructor(docType) {
-        this._docType = docType; // not using class name, since it may change later
-    }
 
     get modelName() {
         return this.constructor.name;

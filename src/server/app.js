@@ -5,6 +5,9 @@ import {config} from './appconfig';
 const express = require('express');
 const bodyParser = require('body-parser')
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const marked = require('marked');
 //const https = require('https');
 //var logger = require('morgan');
 import {initializeDb} from './database/cloudantClient';
@@ -15,14 +18,13 @@ const app = express();
 // prefix for all api paths
 const api = '/api';
 
-
 //app.use(logger('dev'));
 
 function initApiHandlers() {
     const messages = require('./routes/messages');
 
     app.use(bodyParser.json());
-    // we only allow application/json content type
+    // we only allow application/json content type for POST (otherwise there will be errors converting body to json - TODO to fix this instead of enforcing contenttype)
     app.use((req, res, next) => {
         if((req.method === 'POST' || req.method === 'PUT')
             && req.headers['content-type'] !== 'application/json') {
@@ -33,11 +35,35 @@ function initApiHandlers() {
             next();
         }
     });
-    
+
     // since non-js files are not moved by babel, we need to direct to server
     app.use(express.static(__dirname + '/../../src/server/public'));
-
+    
     app.use(`${api}`, messages);
+
+    // serve README if hitting the base URL
+    app.get('/', (req, res) => {
+        const filePath = path.join(__dirname, '/../../README.md');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            // we don't want the following line in the readme shown in github, only for when it is fetched by directly going to url
+            const noteLine = '<br />\n## **Go to the [project on GitHub](https://github.com/samanehb/messages-app) to view better formatting and access all links**\n<br />\n';
+            if(err || !data) {
+                return res.send(noteLine); // send only the link to github if can't read file
+            }
+            data = noteLine + data;
+            // replace relative code paths (used by git) with real url path (to load when hitting base url)
+            const publicUrl = req.protocol + '://' + req.get('host');
+            console.log(publicUrl)
+            data = data.replace(/.\/src\/server\/public/g, publicUrl);
+            // convert markdown (md) to html
+            marked(data, (err, content) => {
+                if (err) {
+                    return res.send(data); // send md if can't convert to html
+                }
+                return res.send(content);
+            });
+        });
+    })
 
     // handle 404 and forwarding to error handler. This middleware is only reached if none of paths above fully handled the request
     app.use((req, res, next) => {
@@ -48,7 +74,8 @@ function initApiHandlers() {
 
     // error handler, build error obj, no stacktraces
     app.use((err, req, res, next) => {
-        console.log(err);
+        console.log(`Error in processing: ${req.url}`);
+        console.log(err.message);
         if(err && err.modelName !== 'ErrorModel') {
             // if error is of type ErrorModel then it is good already, otherwise add getApiModel to make it easy to handle similar to ErrorModel
             // hide error details

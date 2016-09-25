@@ -1,7 +1,7 @@
 const uuid = require('node-uuid');
 import ObjectModel from './objectModel';
 
-const DOC_TYPE = 'message';
+const DOC_TYPE = 'message'; // don't change this constant since data is persisted with this type
 
 export default class MessageModel extends ObjectModel{
 
@@ -12,7 +12,9 @@ export default class MessageModel extends ObjectModel{
      *  and _id and _rev can be set when persisted to db
      */
     constructor(content, messageId, _id, _rev) {
-        super(DOC_TYPE);
+        super();
+        // param: docType: give a type for this object to be used as a key to fetch only this type from database
+        this._docType = DOC_TYPE; // not using class name, since it may change later
         this._messageContent = content;
         this._messageId = messageId;
         this._id = _id;
